@@ -1,9 +1,38 @@
 # 🏢 AD-Admin-PS-Toolkit
 
-> 20 production-ready PowerShell scripts for Active Directory administration — on-premises environments.
+> A collection of 20 production-ready PowerShell scripts for Active Directory administrators — covering user lifecycle, group management, GPO, security auditing, domain health, and automation.
 
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue?logo=powershell)
+![Platform](https://img.shields.io/badge/Platform-Windows%20Server-informational?logo=windows)
+![License](https://img.shields.io/badge/License-MIT-green)
 ![Scripts](https://img.shields.io/badge/Scripts-20%20Complete-brightgreen)
+
+---
+
+## 📋 Table of Contents
+
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+- [Scripts](#scripts)
+- [Usage Examples](#usage-examples)
+- [CSV Templates](#csv-templates)
+- [Safety & Best Practices](#safety--best-practices)
+- [Logging](#logging)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+**AD-Admin-PS-Toolkit** is a complete library of PowerShell scripts designed to streamline Active Directory administration in on-premises Windows environments. Each script is:
+
+- ✅ Self-documented with `.SYNOPSIS`, `.DESCRIPTION`, and `.EXAMPLE` headers
+- ✅ Built with `try/catch` error handling throughout
+- ✅ Safe by default — destructive operations require explicit confirmation
+- ✅ Logging-enabled with operator name and timestamp for full auditability
+- ✅ Modular and standalone — no third-party dependencies required
 
 ---
 
@@ -11,11 +40,13 @@
 
 | Requirement | Details |
 |---|---|
-| PowerShell | 5.1 or higher |
-| Module | `ActiveDirectory` (RSAT Tools) |
-| GPO Scripts | Also requires `GroupPolicy` module (GPMC) |
+| PowerShell | Version 5.1 or higher (`$PSVersionTable.PSVersion`) |
+| OS | Windows Server 2016+ / Windows 10+ with RSAT |
+| Module | `ActiveDirectory` (required for all scripts) |
+| Module | `GroupPolicy` (required for scripts 09 and 17) |
+| Privileges | Varies per script — noted in the table below |
 
-**Install RSAT AD Tools:**
+**Install RSAT modules if not already present:**
 ```powershell
 Add-WindowsCapability -Online -Name "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
 Add-WindowsCapability -Online -Name "Rsat.GroupPolicy.Management.Tools~~~~0.0.1.0"
@@ -23,106 +54,184 @@ Add-WindowsCapability -Online -Name "Rsat.GroupPolicy.Management.Tools~~~~0.0.1.
 
 ---
 
-## All 20 Scripts
+## Getting Started
 
-### 👤 User Management
-| # | Script | Description |
-|---|--------|-------------|
-| 01 | `01_AD_CreateUser.ps1` | Create new AD user — auto SAM/UPN, dept OU targeting, group assignment, temp password |
-| 02 | `02_AD_DisableDeleteUser.ps1` | Safe offboarding — disable/delete, remove groups, reset password, move to Disabled OU |
-| 03 | `03_AD_BulkCreateUsers.ps1` | Bulk provision from CSV with WhatIf preview and per-user results report |
-| 12 | `12_AD_UserSearch.ps1` | Search by name/email/dept/phone, full detail view, side-by-side comparison, find duplicates |
-| 15 | `15_AD_OffboardingWorkflow.ps1` | 8-step automated offboarding with audit report |
-| 16 | `16_AD_OnboardingWorkflow.ps1` | New hire provisioning — create, assign groups by dept, clone buddy, generate welcome sheet |
+**1. Clone the repository**
+```powershell
+git clone https://github.com/YOUR-USERNAME/AD-Admin-PS-Toolkit.git
+cd AD-Admin-PS-Toolkit
+```
 
-### 👥 Group Management
-| # | Script | Description |
-|---|--------|-------------|
-| 04 | `04_AD_GroupManagement.ps1` | Create, add/remove members, clone memberships, find empty groups, delete |
+**2. Allow script execution** *(one-time setup)*
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-### 🗂️ OU Management
-| # | Script | Description |
-|---|--------|-------------|
-| 05 | `05_AD_OUManagement.ps1` | Create, rename, delete OUs; move objects; visualize OU tree; export structure |
+**3. Run any script**
+```powershell
+.\01_AD_CreateUser.ps1 -FirstName "John" -LastName "Doe" -Department "IT"
+```
 
-### 🔐 Password & Account Policies
-| # | Script | Description |
-|---|--------|-------------|
-| 06 | `06_AD_PasswordManagement.ps1` | Reset, unlock, force change, password audit, view policy |
-| 13 | `13_AD_AccountExpiry.ps1` | Set/remove/extend expiry dates, bulk expiry from CSV, view all expiring accounts |
-
-### 📊 Reporting & Auditing
-| # | Script | Description |
-|---|--------|-------------|
-| 07 | `07_AD_UserReports.ps1` | Inactive users, disabled accounts, recent creations, by department, stale computers |
-| 11 | `11_AD_AuditAndCompliance.ps1` | Security audit — privileged groups, service accounts, guest account, password policy |
-| 20 | `20_AD_MasterReport.ps1` | One-click executive report covering all AD areas. Supports -Zip flag |
-
-### 💻 Computer Management
-| # | Script | Description |
-|---|--------|-------------|
-| 08 | `08_AD_ComputerManagement.ps1` | Search, full inventory, disable stale, ping/WMI/RDP test, move OUs |
-
-### 🛡️ GPO Management
-| # | Script | Description |
-|---|--------|-------------|
-| 09 | `09_AD_GPOManagement.ps1` | List, create, link/unlink, backup/restore, HTML report, find unlinked GPOs |
-| 17 | `17_AD_GroupPolicyReport.ps1` | GPO link map, inheritance per OU, WMI filters, change history, full HTML report |
-
-### 📦 Bulk Operations
-| # | Script | Description |
-|---|--------|-------------|
-| 10 | `10_AD_BulkOperations.ps1` | Bulk update attributes, enable/disable, add to groups, move OUs — all via CSV |
-
-### 🔧 Domain Health & Infrastructure
-| # | Script | Description |
-|---|--------|-------------|
-| 14 | `14_AD_DomainHealthCheck.ps1` | DC reachability, SYSVOL/NETLOGON, replication, DNS SRV records, FSMO, time sync |
-| 18 | `18_AD_ServiceAccountManager.ps1` | Audit, create, and manage service accounts; check services using domain accounts |
-| 19 | `19_AD_ReplicationMonitor.ps1` | Replication status/topology, force replication, event log analysis, DC metadata |
+**4. Get built-in help for any script**
+```powershell
+Get-Help .\01_AD_CreateUser.ps1 -Full
+```
 
 ---
 
-## Quick Usage Examples
+## Scripts
+
+### 👤 User Lifecycle Management
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 01 | [`01_AD_CreateUser.ps1`](./01_AD_CreateUser.ps1) | Creates a new AD user with auto-generated SAM/UPN, department-based OU targeting, group assignment, and temp password | ⚠️ |
+| 02 | [`02_AD_DisableDeleteUser.ps1`](./02_AD_DisableDeleteUser.ps1) | Safely disables or permanently deletes accounts — removes groups, resets password, moves to Disabled OU, stamps description | ⚠️ |
+| 03 | [`03_AD_BulkCreateUsers.ps1`](./03_AD_BulkCreateUsers.ps1) | Bulk provisions multiple users from a CSV file with WhatIf preview mode and a per-user results report | ⚠️ |
+| 12 | [`12_AD_UserSearch.ps1`](./12_AD_UserSearch.ps1) | Advanced user lookup by name, email, department, phone, or title; full detail view, side-by-side comparison, duplicate finder | ❌ |
+| 15 | [`15_AD_OffboardingWorkflow.ps1`](./15_AD_OffboardingWorkflow.ps1) | Runs a complete 8-step offboarding checklist — disable, randomize password, remove groups, stamp description, move OU, generate audit report | ⚠️ |
+| 16 | [`16_AD_OnboardingWorkflow.ps1`](./16_AD_OnboardingWorkflow.ps1) | Structured new hire provisioning — creates account, assigns dept-based groups, clones from buddy account, generates welcome sheet | ⚠️ |
+
+### 👥 Group Management
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 04 | [`04_AD_GroupManagement.ps1`](./04_AD_GroupManagement.ps1) | Full group lifecycle — create, add/remove members (single or bulk CSV), clone memberships between users, find empty groups, delete | ⚠️ |
+
+### 🗂️ OU Management
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 05 | [`05_AD_OUManagement.ps1`](./05_AD_OUManagement.ps1) | Create, rename, and delete OUs; move objects between OUs; visualize the OU tree with object counts; export structure to CSV | ✅ |
+
+### 🔐 Password & Account Policies
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 06 | [`06_AD_PasswordManagement.ps1`](./06_AD_PasswordManagement.ps1) | Reset passwords, unlock accounts (single or all at once), force change at logon, password audit report, view domain policy | ⚠️ |
+| 13 | [`13_AD_AccountExpiry.ps1`](./13_AD_AccountExpiry.ps1) | Set, remove, or extend account expiration dates; bulk expiry from CSV; view all accounts expiring within a configurable window | ⚠️ |
+
+### 📊 Reporting & Auditing
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 07 | [`07_AD_UserReports.ps1`](./07_AD_UserReports.ps1) | Generates reports for inactive users, disabled accounts, recently created accounts, users by department, expiring accounts, and stale computers | ❌ |
+| 11 | [`11_AD_AuditAndCompliance.ps1`](./11_AD_AuditAndCompliance.ps1) | Security audit — privileged group membership, service accounts, guest/KRBTGT status, never-logged-on accounts, password policy compliance, SmartCard check | ❌ |
+| 20 | [`20_AD_MasterReport.ps1`](./20_AD_MasterReport.ps1) | One-click executive report covering domain overview, FSMO, DCs, replication, user/computer/group stats, password policy, and security highlights | ❌ |
+
+### 💻 Computer Account Management
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 08 | [`08_AD_ComputerManagement.ps1`](./08_AD_ComputerManagement.ps1) | Search and view computer details, export full inventory with OS summary, disable stale computers, test ping/WMI/RDP connectivity, move between OUs | ✅ |
+
+### 🛡️ GPO Management
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 09 | [`09_AD_GPOManagement.ps1`](./09_AD_GPOManagement.ps1) | List, create, link/unlink, enable/disable GPOs; backup and restore; generate HTML reports; find unlinked GPOs | ⚠️ |
+| 17 | [`17_AD_GroupPolicyReport.ps1`](./17_AD_GroupPolicyReport.ps1) | GPO link map, inheritance per OU, security filtering report, WMI filter inventory, GPO change history, full consolidated HTML report | ❌ |
+
+### 📦 Bulk Operations
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 10 | [`10_AD_BulkOperations.ps1`](./10_AD_BulkOperations.ps1) | Bulk update user attributes, enable/disable accounts, add to groups, move OUs, export users to CSV for editing, bulk set password expiry — all via CSV | ⚠️ |
+
+### 🔧 Domain Health & Infrastructure
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 14 | [`14_AD_DomainHealthCheck.ps1`](./14_AD_DomainHealthCheck.ps1) | DC reachability, SYSVOL/NETLOGON share availability, replication status, DNS SRV records, FSMO role holders, time synchronization | ✅ |
+| 18 | [`18_AD_ServiceAccountManager.ps1`](./18_AD_ServiceAccountManager.ps1) | Discover and audit all service accounts, create new accounts with best-practice settings, check Windows services using domain accounts, reset passwords | ✅ |
+| 19 | [`19_AD_ReplicationMonitor.ps1`](./19_AD_ReplicationMonitor.ps1) | Replication status overview, topology visualization, force replication between DCs, event log analysis, DC metadata and repadmin summary | ✅ |
+
+> **Legend:** ✅ = Always required &nbsp; ⚠️ = Recommended / required for some features &nbsp; ❌ = Not required
+
+---
+
+## Usage Examples
 
 ```powershell
-# New hire onboarding
-.\16_AD_OnboardingWorkflow.ps1 -FirstName "Sarah" -LastName "Jones" -Department "Finance" -Title "Analyst" -Manager "jsmith" -BuddyAccount "bwilson"
+# Create a new user in the IT department and add to groups
+.\01_AD_CreateUser.ps1 -FirstName "John" -LastName "Doe" -Department "IT" -Title "SysAdmin" -Groups "IT-Staff","VPN-Users"
 
-# Full offboarding
-.\15_AD_OffboardingWorkflow.ps1 -Identity "jdoe" -Reason "Resigned" -DisabledOU "OU=Disabled,OU=Users,DC=company,DC=com"
+# Disable a departing user and remove all group memberships
+.\02_AD_DisableDeleteUser.ps1 -Identity "jdoe" -Action Disable -Reason "Resigned" -RemoveGroups
 
-# Bulk create users (preview first)
+# Preview bulk user creation from CSV, then execute
 .\03_AD_BulkCreateUsers.ps1 -CSVPath "C:\HR\new_starters.csv" -WhatIf
 .\03_AD_BulkCreateUsers.ps1 -CSVPath "C:\HR\new_starters.csv"
 
-# Executive AD report (zipped)
-.\20_AD_MasterReport.ps1 -OutputPath "C:\Reports" -Zip
+# Full new hire onboarding with buddy group cloning
+.\16_AD_OnboardingWorkflow.ps1 -FirstName "Sarah" -LastName "Jones" -Department "Finance" -Title "Analyst" -Manager "jsmith" -BuddyAccount "bwilson"
 
-# Domain health check
+# Full 8-step offboarding with audit report
+.\15_AD_OffboardingWorkflow.ps1 -Identity "jdoe" -Reason "Resigned" -DisabledOU "OU=Disabled,OU=Users,DC=company,DC=com"
+
+# Unlock all locked accounts across the domain
+.\06_AD_PasswordManagement.ps1   # Select option 2, then type ALL
+
+# Reset a user's password and force change at next logon
+.\06_AD_PasswordManagement.ps1   # Select option 1
+
+# Run all user reports at once and export CSVs
+.\07_AD_UserReports.ps1   # Select option A
+
+# Search for a user by email address
+.\12_AD_UserSearch.ps1   # Select option 1, then option 2 for email
+
+# Clone group memberships from one user to another
+.\04_AD_GroupManagement.ps1   # Select option 5
+
+# Backup all GPOs before making changes
+.\09_AD_GPOManagement.ps1   # Select option 5
+
+# Full domain health check
 .\14_AD_DomainHealthCheck.ps1
 
-# Full security audit
+# Full security audit report
 .\11_AD_AuditAndCompliance.ps1 -OutputPath "C:\AuditReports"
+
+# One-click executive AD report (zipped for easy sharing)
+.\20_AD_MasterReport.ps1 -OutputPath "C:\Reports" -Zip
+
+# Export users to CSV, edit attributes, then bulk re-import
+.\10_AD_BulkOperations.ps1   # Select option 5 to export, then option 1 to update
+
+# Audit all service accounts for compliance issues
+.\18_AD_ServiceAccountManager.ps1   # Select option 1
+
+# Check replication status across all DC partnerships
+.\19_AD_ReplicationMonitor.ps1   # Select option 1
 ```
 
 ---
 
 ## CSV Templates
 
-**Bulk User Create (`03`):**
+**Bulk User Create (`03_AD_BulkCreateUsers.ps1`):**
 ```csv
 FirstName,LastName,Department,Title,Manager,OU,Groups,Email
 John,Doe,IT,SysAdmin,jsmith,,IT-Staff;VPN-Users,john.doe@company.com
+Jane,Smith,HR,HR Manager,,,HR-Staff,jane.smith@company.com
 ```
 
-**Bulk Attribute Update (`10`):**
+**Bulk Attribute Update (`10_AD_BulkOperations.ps1`):**
 ```csv
 SamAccountName,Department,Title,Office,Phone,Manager
 jdoe,IT,Senior SysAdmin,HQ Floor 1,+1-555-0100,jsmith
 ```
 
-**Bulk Account Expiry (`13`):**
+**Bulk Group Add (`10_AD_BulkOperations.ps1`):**
+```csv
+SamAccountName
+jdoe
+jsmith
+ajohansson
+```
+
+**Bulk Account Expiry (`13_AD_AccountExpiry.ps1`):**
 ```csv
 SamAccountName,ExpiryDate
 contractor1,2026-06-30
@@ -131,15 +240,51 @@ temp_user,never
 
 ---
 
-## Features (All Scripts)
-- ✅ Full comment-based help (`Get-Help .\script.ps1`)
-- ✅ Try/catch error handling
-- ✅ Audit logging with operator name and timestamp
-- ✅ Confirmation prompts before destructive actions
-- ✅ WhatIf/preview modes where applicable
-- ✅ CSV exports for all reports
+## Safety & Best Practices
+
+- **Preview before acting** — `03_AD_BulkCreateUsers.ps1` supports `-WhatIf` to show what would happen without making changes. Always preview first.
+- **Confirm destructive actions** — Scripts that disable, delete, or modify accounts prompt for explicit confirmation before proceeding.
+- **Double confirmation for deletions** — `02_AD_DisableDeleteUser.ps1` requires typing the username to confirm permanent deletion.
+- **Test in a lab first** — Validate scripts against a test OU or non-production domain before running in production.
+- **Least privilege** — Only scripts that genuinely require Domain Admin are marked ✅. Use Account Operator rights where possible.
+- **Configure before running** — Several scripts have configurable sections at the top (`$DeptOUMap`, `$DeptConfig`, `$GlobalGroups`, `$DefaultOU`) — edit these to match your environment before use.
+
+---
+
+## Logging
+
+Scripts that perform sensitive or impactful actions write timestamped audit logs automatically:
+
+| Script | Log File |
+|--------|----------|
+| `01_AD_CreateUser.ps1` | `AD_CreateUser_YYYYMMDD.log` |
+| `02_AD_DisableDeleteUser.ps1` | `AD_DisableDelete_YYYYMMDD.log` |
+| `03_AD_BulkCreateUsers.ps1` | `AD_BulkCreate_YYYYMMDD_HHmmss.log` |
+| `04_AD_GroupManagement.ps1` | `AD_Groups_YYYYMMDD.log` |
+| `05_AD_OUManagement.ps1` | `AD_OU_YYYYMMDD.log` |
+| `06_AD_PasswordManagement.ps1` | `AD_Password_YYYYMMDD.log` |
+| `09_AD_GPOManagement.ps1` | `AD_GPO_YYYYMMDD.log` |
+| `15_AD_OffboardingWorkflow.ps1` | `AD_Offboarding_YYYYMMDD.log` |
+| `16_AD_OnboardingWorkflow.ps1` | `AD_Onboarding_YYYYMMDD.log` |
+| `18_AD_ServiceAccountManager.ps1` | `AD_ServiceAccounts_YYYYMMDD.log` |
+| `19_AD_ReplicationMonitor.ps1` | `AD_Replication_YYYYMMDD.log` |
+
+All logs include the **operator username**, **timestamp**, and **action taken** for full auditability. Report-generating scripts save timestamped `.txt` and/or `.csv` files to `%USERPROFILE%\Desktop` by default, or to any path specified with `-OutputPath`.
+
+---
+
+## Contributing
+
+Contributions are welcome! To add a script or improve an existing one:
+
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature/your-script-name`
+3. Follow the existing script structure — include `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, and `.EXAMPLE` headers
+4. Add error handling with `try/catch` and include logging
+5. Submit a pull request with a clear description of what was added or changed
 
 ---
 
 ## License
+
 MIT License — free to use, modify, and distribute.
